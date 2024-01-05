@@ -11,42 +11,12 @@ using namespace api;
 using namespace output;
 using namespace mr::outputpin;
 
-#define PIN_COUNT 29
 static const char* const TAG = "profalux-blind";
-
-/* TODO
-   ====
-  
-   Mettre la creation des pins dans Controler.
-   Le volet va récupérer les pins qui le concernent, selon son n°.
-*/
-  
-static int CanPin[] = {
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 0, 0, 0, 1, 1, 1
-};
-
-static OutputPin *AllPins[PIN_COUNT];
-static OutputPin *PicoLed;  
-/* Notes
-   =====
-   Une sortie GPIO est un composant gpio::GPIOBinaryOutput.
-
-  */
 
 ProfaluxBlind::ProfaluxBlind() {
   position = 0.5f;
 }
 
-void ProfaluxBlind::setPinOutput(int pinNumber, OutputPin *&thePin) {
-  OutputPin *pin = NULL;
-  if (pinNumber < PIN_COUNT) {
-    pin = AllPins[pinNumber];
-  }
-  thePin = pin;
-}
-  
 void ProfaluxBlind::setControler(ProfaluxControler *controler) {
   this->controler = controler;
 }
@@ -54,56 +24,22 @@ void ProfaluxBlind::setControler(ProfaluxControler *controler) {
 void ProfaluxBlind::init_() {
   if (this->controler) {
     if (!initDone) {
-      this->ledPin =  PicoLed; // TODO
       
       int upPinNumber = 0;
       int stopPinNumber = 0;
       int downPinNumber = 0;
       
-      controler->getPinNumbers(blindNumber, upPinNumber, stopPinNumber, downPinNumber);
-      ESP_LOGI(TAG, "Blind %d: %d %d %d", blindNumber, upPinNumber, stopPinNumber, downPinNumber); 
-      setPinOutput(upPinNumber, this->upPin);
-      setPinOutput(stopPinNumber, this->stopPin);
-      setPinOutput(downPinNumber, this->downPin);
+      controler->get_pin_numbers(blindNumber, upPinNumber, stopPinNumber, downPinNumber);
+      ESP_LOGI(TAG, "Blind %d: %d %d %d", blindNumber, upPinNumber, stopPinNumber, downPinNumber);
+      this->upPin = controler->get_pin(upPinNumber);
+      this->stopPin = controler->get_pin(stopPinNumber);
+      this->downPin = controler->get_pin(downPinNumber);
       initDone = true;
     }
   }
 }
 
-    
-void BlinkTest(int start, int end) {
-  for (int i=0;i<3;i++) {
-    PicoLed->blink(100,200);
-    for (int j=start; j<=end; j++) {
-      if (j<PIN_COUNT && AllPins[j] != NULL) {
-        AllPins[j]->turn_on();
-      }
-    }
-    delay(100);
-    for (int j=start; j<=end; j++) {
-      if (j<PIN_COUNT && AllPins[j] != NULL) {
-        AllPins[j]->turn_off();
-      }
-    }
-  }
-}
-
 void ProfaluxBlind::setup() {
-  // ESP_LOGI(TAG, "Debut Setup"); Trace ne fonctionne pas dans setup()
-
-  PicoLed = new OutputPin(32);
-  for (int i=0; i<PIN_COUNT;i++) {
-    if (CanPin[i]) {
-      AllPins[i] = new OutputPin(i);
-      ESP_LOGD(TAG,"Pin[%d] = 0x%8x", i, (long) AllPins[i]);
-    }
-    else {
-      AllPins[i] = NULL;
-      ESP_LOGD(TAG,"Pas de pin %d");
-    }
-  }
-  
-  PicoLed->blink(200,200, 3);   
 }
 
 void ProfaluxBlind::setNumber(int blindNumber) {
@@ -130,8 +66,8 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   }
   
   OutputPin *pin = NULL;
-  PicoLed->blink(20);
-  
+  controler->blink(controler->get_led_pin(), 20, 100, 3);
+
   float pos = call.get_position().value();
   
   if (controler == NULL) {
@@ -162,7 +98,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   }    
 }
 
-void ProfaluxBlind::stopAll(DelayedAction *todo) {
+void ProfaluxBlind::stopAll(DelayedAction<ProfaluxBlind, OutputPin *> *todo) {
   if (upPin!=NULL) upPin->turn_off();
   if (stopPin!=NULL) stopPin->turn_off();
   if (downPin!=NULL) downPin->turn_off();
@@ -170,9 +106,9 @@ void ProfaluxBlind::stopAll(DelayedAction *todo) {
 
 void ProfaluxBlind::activateMotor(OutputPin *pin) {
   pin->turn_on();
-  DelayedAction::Callback_t pMethod = &ProfaluxBlind::stopAll;
+  DelayedAction<ProfaluxBlind, OutputPin *>::Callback_t pMethod = &ProfaluxBlind::stopAll;
   
-  DelayedAction *off = new DelayedAction(this, millis()+1000, pMethod);
+  DelayedAction<ProfaluxBlind, OutputPin *> *off = new DelayedAction(this, millis()+1000, pMethod, pin);
   controler->add_todo(off);
 }
 

@@ -1,28 +1,42 @@
 #pragma once
 
-#include <ctime>
-
-#include "ProfaluxBlind.h"
+#include "esphome/core/datatypes.h"
 
 namespace esphome {
 namespace profalux_controler {
 
+class GenericDelayedAction {
+public:
+  
+  struct CompareDesc {
+      bool operator() (const GenericDelayedAction *a1, const GenericDelayedAction *a2) const {
+          return a1->get_when()  > a2->get_when() ;
+      }
+  };
 
-class DelayedAction {
+  GenericDelayedAction(uint32_t when) {  this->when = when; }
+  virtual void do_it() = 0;
+  inline uint32_t get_when() const { return when; }
+protected:
+  uint32_t when;
+};
+
+
+template<class T,class D>
+class DelayedAction : public GenericDelayedAction {
 public: 
-  typedef void (ProfaluxBlind::*Callback_t)(DelayedAction *);
+  typedef void (T::*Callback_t)(DelayedAction<T,D> *);
  
-  DelayedAction(ProfaluxBlind *who, clock_t when, Callback_t what) { this->who = who; this->when = when; this->what = what; }
-  void do_it();
-  friend bool operator< (const DelayedAction &a1, const DelayedAction &a2) {
-    return a2.when > a1.when;
+  DelayedAction(T *who, uint32_t when, Callback_t what, D data) : GenericDelayedAction(when) { this->who = who; this->what = what; this->data = data; }
+  void do_it() {
+    (who->*what) (this);
   }
-  inline clock_t get_when() { return when; }
+  D get_data() { return data; }
   
 protected:
-  clock_t when;
-  ProfaluxBlind *who;
+  T *who;
   Callback_t what;
+  D data;
 };
 
 }  // namespace profalux_controler

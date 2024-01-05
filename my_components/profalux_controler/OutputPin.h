@@ -17,18 +17,6 @@ class OutputPin : public gpio::GPIOBinaryOutput {
  public:
   OutputPin(int pinNumber);
   int getPinNumber() { return myPin->get_pin(); }
-  void blink(int ms) { turn_on(); delay(ms); turn_off(); }
-  void blink(int mso, int msd) { turn_on(); delay(mso); turn_off(); delay(msd); }
-  void blink(int mso, int msd, int cnt) {
-    for (int i=0; i<cnt; i++) {
-      turn_on();
-      delay(mso);
-      turn_off();
-      if (i<(cnt-1)) {
-        delay(msd);
-      }
-    }
-  }
 };
     
 } // 

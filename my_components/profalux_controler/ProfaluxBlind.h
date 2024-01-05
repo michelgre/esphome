@@ -4,6 +4,7 @@
 #include "esphome/components/cover/cover.h"
 
 #include "OutputPin.h"
+#include "DelayedAction.h"
 #include "ProfaluxControler.h"
 
 namespace esphome {
@@ -13,13 +14,12 @@ using namespace mr::outputpin;
 
 class ProfaluxBlind;
 class ProfaluxControler;
-class DelayedAction;
   
 class ProfaluxBlind : public cover::Cover, public Component {
   
 public:
 
-  ProfaluxBlind(); // TODO: recup controler ?
+  ProfaluxBlind(); 
   void setup() override;
   void loop() override;
   void set_entity_id(const std::string& entity_id) { entity_id_ = entity_id; }
@@ -29,12 +29,11 @@ public:
   void setNumber(int blindNumber);
   
   virtual float get_setup_priority() const { return 0.2; }
-  virtual void stopAll(DelayedAction *todo);
+  virtual void stopAll(DelayedAction<ProfaluxBlind, OutputPin *> *todo);
 protected:
   std::string entity_id_;
   ProfaluxControler *controler;
   int blindNumber = 1;
-  OutputPin *ledPin = NULL;
   OutputPin *upPin = NULL;
   OutputPin *downPin = NULL;
   OutputPin *stopPin = NULL;
@@ -43,7 +42,6 @@ protected:
   void init_();
   void control(const cover::CoverCall &call) override;
   void activateMotor(OutputPin *pin);
-  void setPinOutput(int pinNumber, OutputPin *&thePin);
  
 };
 
