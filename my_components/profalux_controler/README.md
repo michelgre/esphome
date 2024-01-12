@@ -49,6 +49,8 @@ and where I also soldered a 10 kΩ resistor for each data line (3 x 5 for 5 rem
 Upload the PCB schema and the Gerber files, and pictures of the remotes PCB, and the 3D model
 of the housing.
 
+## Disclaimer
+This is my first Github open-source project, my first ESPHome component, my first PCB design. Please be undestanding.
 ## Hardware needed
 - one 'Profalux' radio remote control per shutter
 - a Raspberry Pi Pico W

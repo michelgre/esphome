@@ -55,7 +55,7 @@ cover::CoverTraits ProfaluxBlind::get_traits() {
   traits.set_is_assumed_state(false);
   traits.set_supports_position(true);
   traits.set_supports_stop(true);
-  traits.set_supports_tilt(false);
+  traits.set_supports_tilt(true);
 
   return traits;
 }
@@ -66,7 +66,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   }
   
   OutputPin *pin = NULL;
-  controler->blink(controler->get_led_pin(), 20, 100, 3);
+  controler->blink(controler->get_led_pin(), 20);
 
   float pos = call.get_position().value();
   
@@ -99,12 +99,24 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
 }
 
 void ProfaluxBlind::stopAll(DelayedAction<ProfaluxBlind, OutputPin *> *todo) {
-  if (upPin!=NULL) upPin->turn_off();
-  if (stopPin!=NULL) stopPin->turn_off();
-  if (downPin!=NULL) downPin->turn_off();
+  if (todo!=NULL) {
+    OutputPin *pin = todo->get_data();
+    if (pin!=NULL) {
+      pin->turn_off();
+    }
+  }
+  else {
+    if (upPin!=NULL) upPin->turn_off();
+    if (stopPin!=NULL) stopPin->turn_off();
+    if (downPin!=NULL) downPin->turn_off();
+  }
 }
 
 void ProfaluxBlind::activateMotor(OutputPin *pin) {
+  // Arrête tout pour ne pas générer des combinaisons de touches
+  stopAll(NULL);
+  
+  // Lance la commande
   pin->turn_on();
   DelayedAction<ProfaluxBlind, OutputPin *>::Callback_t pMethod = &ProfaluxBlind::stopAll;
   

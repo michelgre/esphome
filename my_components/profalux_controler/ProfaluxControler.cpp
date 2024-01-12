@@ -32,6 +32,7 @@ void ProfaluxControler::setup() {
       AllPins[i] = NULL;
     }
   }
+  this->blink(PicoLed, 30, 100, 3);
 }
 
 OutputPin *ProfaluxControler::get_pin(int pinNumber) {
