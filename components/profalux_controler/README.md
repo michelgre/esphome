@@ -75,6 +75,7 @@ rp2040:
 profalux_controler:
   id: pfc1
   controler-name: My Shutters Controler
+  signal-duration: 1000
   
 cover:
   - platform: profalux_controler

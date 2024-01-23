@@ -120,7 +120,7 @@ void ProfaluxBlind::activateMotor(OutputPin *pin) {
   pin->turn_on();
   DelayedAction<ProfaluxBlind, OutputPin *>::Callback_t pMethod = &ProfaluxBlind::stopAll;
   
-  DelayedAction<ProfaluxBlind, OutputPin *> *off = new DelayedAction(this, millis()+1000, pMethod, pin);
+  DelayedAction<ProfaluxBlind, OutputPin *> *off = new DelayedAction(this, millis()+controler->get_signal_duration(), pMethod, pin);
   controler->add_todo(off);
 }
 

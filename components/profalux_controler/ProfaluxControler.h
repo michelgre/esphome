@@ -54,6 +54,8 @@ public:
   virtual float get_setup_priority() const { return 0.1; }
   void set_controler_id(std::string s) { controlerId = s; }
   std::string get_controler_id() { return controlerId; }
+  int get_signal_duration() { return signalDuration; }
+  void set_signal_duration(int signalDuration) { this->signalDuration = signalDuration; }
  
 protected:
   void turn_off(DelayedAction<ProfaluxControler,OutputPin *> *action);
@@ -68,6 +70,7 @@ protected:
     21, 20, 19,
     18, 17, 16    
   };
+  int signalDuration = 1000;
   ToDoList todo_list;
 };
 
