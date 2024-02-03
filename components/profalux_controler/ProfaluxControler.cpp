@@ -1,8 +1,11 @@
 #include "esphome/core/log.h"
 
 #include "ProfaluxControler.h"
-#include "DelayedAction.h"
+#include "ScheduledTask.h"
+#include "QueuedTask.h"
+#include "Task.h"
 #include "OutputPin.h"
+#include "debug.h"
 
 using namespace esphome::mr::outputpin;
 
@@ -32,7 +35,8 @@ void ProfaluxControler::setup() {
       AllPins[i] = NULL;
     }
   }
-  this->blink(PicoLed, 30, 100, 3);
+  //this->blink(PicoLed, 30, 100, 3);
+  ESP_LOGCONFIG(TAG, "Fin Setup\n");
 }
 
 OutputPin *ProfaluxControler::get_pin(int pinNumber) {
@@ -44,38 +48,63 @@ OutputPin *ProfaluxControler::get_pin(int pinNumber) {
   }
 }
 
-
-void ProfaluxControler::add_todo(GenericDelayedAction *todo) { 
-  todo_list.push(todo);
-  trace_todo();
-}
-
-void ProfaluxControler::trace_todo() {
-  ToDoList pq (todo_list);
+void ProfaluxControler::trace_schedule() {
+  Schedule pq (schedule);
   while (pq.size()>0) {
-    GenericDelayedAction *todo = pq.top();
+    GenericScheduledTask *task = pq.top();
     pq.pop();
-    ESP_LOGD(TAG, "Todo List: %ld", todo->get_when());
+    ESP_LOGD(TAG, "Schedule: %ld", task->get_when());
   }
 }
 
+int numLoop = 0;
+int lastScheduledSeen = 0;
+int lastQueuedSeen = 0;
 void ProfaluxControler::loop() {
-  
-  // Traite les actions à faire si elles ont échu
-  if (todo_list.size()>0) {
-    while (todo_list.size()>0) {
-      GenericDelayedAction *todo = todo_list.top();
-      //ESP_LOGD(TAG,"loop: todo %d, clock=%ld, time=%ld",todo_list.size(), millis(), todo->get_when());
+  // Execute scheduled tasks if they are due
+  if (schedule.size()>0) {
+    while (schedule.size()>0) {
+      GenericScheduledTask *todo = schedule.top();
+      if (lastScheduledSeen!=todo->get_id()) {
+        ESP_LOGD(TAG,"loop: todo %d, first=%d, clock=%ld, time=%ld",schedule.size(), todo->get_id(), millis(), todo->get_when());
+        lastScheduledSeen = todo->get_id();
+      }
       if (todo->get_when()<=millis()) {
-        todo_list.pop();
+        schedule.pop();
+        ESP_LOGD(TAG,"loop: doing %d, clock=%ld",todo->get_id(), millis());
         todo->do_it();
         delete todo;
       }
       else {
-        break; // Plus rien à faire pour l'instant
+        break; // Plus rien Ã  faire pour l'instant
       }
     }
   }
+
+  // Execute / Check task queue
+  if (taskQueue.size()>0) {
+    GenericQueuedTask *currentTask = taskQueue.front();
+    if (lastQueuedSeen!=currentTask->get_id()) {
+      ESP_LOGD(TAG,"queued: %d, first=%d", taskQueue.size(), currentTask->get_id());
+      lastQueuedSeen = currentTask->get_id();
+    }
+
+    if (currentTask->is_finished()) {
+      ESP_LOGD(TAG,"clean task %d", currentTask->get_id());
+      // The task has completed, remove it
+      taskQueue.pop_front();
+      delete currentTask;
+    }
+    else if (!currentTask->is_started()) {
+      // Not yet started, start it
+      ESP_LOGD(TAG,"start task %d", currentTask->get_id());
+      currentTask->do_it();
+    }
+    else {
+      // Nothing to do in this controler loop
+    }
+  }
+  
 }
 
 void ProfaluxControler::register_blind(ProfaluxBlind *blind) {
@@ -101,61 +130,71 @@ void ProfaluxControler::get_pin_numbers(int blindNumber, int &upNumber, int &sto
   }
 }
 
-void ProfaluxControler::turn_off(DelayedAction<ProfaluxControler, OutputPin *> *action) {
-  action->get_data()->turn_off();
+void ProfaluxControler::turn_off(Task<ProfaluxControler, OutputPin *> *task) {
+  task->get_data()->turn_off();
 }
 
-void ProfaluxControler::blink(OutputPin *pin, int ms) {
-  if (pin!=NULL) {
-    pin->turn_on();
-    DelayedAction<ProfaluxControler, OutputPin *>::Callback_t pMethod = &ProfaluxControler::turn_off;
-    DelayedAction<ProfaluxControler, OutputPin *> *off = new DelayedAction(this, millis()+ms, pMethod, pin);
-    this->add_todo(off);
+void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) {
+  BlinkData *data = task->get_data() ;
+  ESP_LOGD(TAG,"blink_again: task %d, on=%d, count=%d",task->get_id(), data->isOn, data->count);
+  if (data->mainTask==NULL) {
+    data->mainTask = task;
   }
-}  
-
-struct BlinkData {
-  BlinkData(OutputPin *pin, int ms1, int ms2, int count, bool isOn) {
-    this->pin = pin;
-    this->ms1 = ms1;
-    this->ms2 = ms2;
-    this->count = count;
-    this->isOn = isOn;
-  }
-  OutputPin *pin;
-  int ms1;
-  int ms2;
-  int count;
-  bool isOn;
-};
-
-void ProfaluxControler::blinkAgain(DelayedAction<ProfaluxControler, BlinkData *> *action) {
-  BlinkData *data = action->get_data() ;
   if (!data->isOn) {
     data->pin->turn_on();
     data->isOn = true;
-    this->add_todo(new DelayedAction<ProfaluxControler, BlinkData *>(this, millis()+data->ms1, &ProfaluxControler::blinkAgain, data));
+
+    Task<ProfaluxControler, BlinkData *> nextBlinkTask(this, &ProfaluxControler::blink_again, data);
+    this->schedule_task(nextBlinkTask, millis()+data->ms1);
   }
   else {
     data->pin->turn_off();
     data->isOn = false;
     data->count--;
-    if (data->count==0) {
+    task->terminate();
+    if (data->count==0) { // That's the end of this blink task
+      if (data->mainTask!=NULL) {
+        data->mainTask->terminate(); // Terminate the queued task, if any
+      }
       delete data;
     }
     else {
-      this->add_todo(new DelayedAction<ProfaluxControler, BlinkData *>(this, millis()+data->ms2, &ProfaluxControler::blinkAgain, data));
+     Task<ProfaluxControler, BlinkData *> nextBlinkTask(this, &ProfaluxControler::blink_again, data);
+     this->schedule_task(nextBlinkTask, millis()+data->ms2);
     }
   }
 }
   
+void ProfaluxControler::blink(OutputPin *pin, int ms) {
+  if (pin!=NULL) {
+    pin->turn_on();
+    Task<ProfaluxControler, OutputPin *> stopTask(this, &ProfaluxControler::turn_off, pin);
+    this->schedule_task(stopTask, millis()+ms);
+  }
+}  
+
 void ProfaluxControler::blink(OutputPin *pin, int ms1, int ms2, int count) {
   if (pin != NULL) {
     pin->turn_on();
     BlinkData *data = new BlinkData(pin, ms1, ms2, count, true);
-    DelayedAction<ProfaluxControler, BlinkData *> *blink = new DelayedAction(this, millis()+ms1, &ProfaluxControler::blinkAgain, data);
-    this->add_todo(blink);
+    Task<ProfaluxControler, BlinkData *> offTask (this, &ProfaluxControler::blink_again, data);
+    schedule_task(offTask, millis()+ms1);
   }
 }
+
+void ProfaluxControler::queue_blink(OutputPin *pin, int ms) {
+  trace_free_heap(TAG);
+  BlinkData *data = new BlinkData(pin, ms, 0, 1, false);
+
+  // create a task
+  Task<ProfaluxControler, BlinkData *> task(this, &ProfaluxControler::blink_again, data);
+  queue_task(task);
+
+}
+
+const char* ProfaluxControler::get_tag() {
+  return TAG;
+}
+
 }  // namespace profalux_controler
 }  // namespace esphome

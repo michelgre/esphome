@@ -1,0 +1,2 @@
+- regarde où ajouter des const
+- revoir le nommage des variables

@@ -4,7 +4,8 @@
 #include "esphome/components/cover/cover.h"
 
 #include "OutputPin.h"
-#include "DelayedAction.h"
+#include "ScheduledTask.h"
+#include "Task.h"
 #include "ProfaluxControler.h"
 
 namespace esphome {
@@ -24,12 +25,15 @@ public:
   void loop() override;
   void set_entity_id(const std::string& entity_id) { entity_id_ = entity_id; }
   std::string get_entity_id() { return entity_id_; }
-  cover::CoverTraits get_traits() override;
+  esphome::cover::CoverTraits get_traits() override;
   void setControler(ProfaluxControler *controler);
   void setNumber(int blindNumber);
+
+  void set_pin(const OutputPin *pin);
   
   virtual float get_setup_priority() const { return 0.2; }
-  virtual void stopAll(DelayedAction<ProfaluxBlind, OutputPin *> *todo);
+  virtual void stop_control(ScheduledTask<ProfaluxBlind, OutputPin *> *task);
+  void turn_on(Task<ProfaluxBlind, OutputPin *> *task);
 protected:
   std::string entity_id_;
   ProfaluxControler *controler;

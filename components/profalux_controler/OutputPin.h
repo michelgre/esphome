@@ -9,7 +9,7 @@
 namespace esphome {
 namespace mr {
 namespace outputpin {
-  
+ 
 class OutputPin : public gpio::GPIOBinaryOutput {
  protected:
   rp2040::RP2040GPIOPin *myPin = NULL;

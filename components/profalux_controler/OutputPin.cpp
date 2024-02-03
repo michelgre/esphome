@@ -4,7 +4,7 @@ namespace esphome {
 namespace mr {
 namespace outputpin {
 
-  /* Voir code généré sur output: */
+/* A GPIO output pin */
 OutputPin::OutputPin(int pinNumber) {
   this->set_component_source("gpio.output");
   App.register_component(this);

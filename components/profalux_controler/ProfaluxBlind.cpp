@@ -1,8 +1,11 @@
 #include "esphome/core/log.h"
+#ifndef VSCODE
 #include "esphome.h"
+#endif
 
 #include "ProfaluxBlind.h"
-#include "DelayedAction.h"
+#include "ScheduledTask.h"
+#include "OutputPin.h"
 
 namespace esphome {
 namespace profalux_controler {
@@ -64,7 +67,6 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   if (!initDone) {
     this->init_();
   }
-  
   OutputPin *pin = NULL;
   controler->blink(controler->get_led_pin(), 20);
 
@@ -98,7 +100,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   }    
 }
 
-void ProfaluxBlind::stopAll(DelayedAction<ProfaluxBlind, OutputPin *> *todo) {
+void ProfaluxBlind::stop_control(ScheduledTask<ProfaluxBlind, OutputPin *> *todo) {
   if (todo!=NULL) {
     OutputPin *pin = todo->get_data();
     if (pin!=NULL) {
@@ -112,16 +114,12 @@ void ProfaluxBlind::stopAll(DelayedAction<ProfaluxBlind, OutputPin *> *todo) {
   }
 }
 
+void ProfaluxBlind::turn_on(Task<ProfaluxBlind, OutputPin *> *task) {
+  controler->blink(task->get_data(), controler->get_signal_duration());
+}
+
 void ProfaluxBlind::activateMotor(OutputPin *pin) {
-  // Arrête tout pour ne pas générer des combinaisons de touches
-  stopAll(NULL);
-  
-  // Lance la commande
-  pin->turn_on();
-  DelayedAction<ProfaluxBlind, OutputPin *>::Callback_t pMethod = &ProfaluxBlind::stopAll;
-  
-  DelayedAction<ProfaluxBlind, OutputPin *> *off = new DelayedAction(this, millis()+controler->get_signal_duration(), pMethod, pin);
-  controler->add_todo(off);
+  controler->queue_blink(pin, controler->get_signal_duration());
 }
 
 }  // namespace profalux_controler
