@@ -36,7 +36,17 @@ void ProfaluxControler::setup() {
     }
   }
   this->blink(PicoLed, 30, 100, 3);
-  ESP_LOGCONFIG(TAG, "Fin Setup\n");
+  ESP_LOGD(TAG, "Fin Setup");
+
+      // Debug
+  ESP_LOGD(TAG, "Allume 11");
+    rp2040::RP2040GPIOPin pinTest;
+    pinTest.set_flags(esphome::gpio::FLAG_OUTPUT);
+    pinTest.set_pin(11);
+    pinTest.setup();
+    pinTest.digital_write(true);
+    // Debug end
+
 }
 
 OutputPin *ProfaluxControler::get_pin(int pinNumber) {
@@ -142,13 +152,6 @@ void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) 
   }
   if (!data->isOn) {
     ESP_LOGD(TAG,"Turn on pin %d",data->pin->getPinNumber());
-    // Debug
-    rp2040::RP2040GPIOPin pinTest;
-    pinTest.setup();
-    pinTest.set_flags(esphome::gpio::FLAG_OUTPUT);
-    pinTest.set_pin(11);
-    pinTest.digital_write(true);
-    // Debug end
     data->pin->turn_on();
     data->isOn = true;
 
