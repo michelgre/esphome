@@ -142,7 +142,7 @@ void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) 
   }
   if (!data->isOn) {
     ESP_LOGD(TAG,"Turn on pin %d",data->pin->getPinNumber());
-    AllPins[11].turn_on();
+    AllPins[11]->turn_on();
     data->pin->turn_on();
     data->isOn = true;
 
