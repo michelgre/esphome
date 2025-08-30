@@ -22,7 +22,7 @@ CONF_PROFALUX_BLIND_ID = "conf_profalux_blind_id"
 CONF_CONTROLER_ID = "controler_id"
 CONF_BLIND_NUMBER = "blind_number"
 
-CONFIG_SCHEMA = cover.COVER_SCHEMA.extend({
+CONFIG_SCHEMA = cover.cover_schema(ProfaluxBlind).extend({
     cv.GenerateID(): cv.declare_id(ProfaluxBlind),
     cv.GenerateID(CONF_CONTROLER_ID): cv.use_id(ProfaluxControler),
     cv.Required(CONF_BLIND_NUMBER): cv.positive_int,
