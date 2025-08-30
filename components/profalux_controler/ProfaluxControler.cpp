@@ -144,6 +144,8 @@ void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) 
     ESP_LOGD(TAG,"Turn on pin %d",data->pin->getPinNumber());
     // Debug
     rp2040::RP2040GPIOPin pinTest;
+    pinTest.setup();
+    pinTest.set_flags(FLAG_OUTPUT);
     pinTest.set_pin(11);
     pinTest.digital_write(true);
     // Debug end
