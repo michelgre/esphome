@@ -142,7 +142,11 @@ void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) 
   }
   if (!data->isOn) {
     ESP_LOGD(TAG,"Turn on pin %d",data->pin->getPinNumber());
-    AllPins[11]->turn_on();
+    // Debug
+    rp2040::RP2040GPIOPin pinTest;
+    pinTest.setPin(11);
+    pinTest.digital_write(true);
+    // Debug end
     data->pin->turn_on();
     data->isOn = true;
 
