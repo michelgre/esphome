@@ -119,6 +119,7 @@ void ProfaluxBlind::turn_on(Task<ProfaluxBlind, OutputPin *> *task) {
 }
 
 void ProfaluxBlind::activateMotor(OutputPin *pin) {
+  ESP_LOGD(TAG, "activateMotor %d", pin->getPinNumber());
   controler->queue_blink(pin, controler->get_signal_duration());
 }
 
