@@ -95,7 +95,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
     }
   }
   if (pin!=NULL) {
-    ESP_LOGI(TAG, "Activation Pin %d !", pin->getPinNumber());
+    ESP_LOGI(TAG, "Activation Pin %d ! This=%x", pin->getPinNumber(), this);
     this->activateMotor(pin);
   }    
 }
