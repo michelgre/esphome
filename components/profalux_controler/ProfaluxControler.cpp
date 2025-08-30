@@ -184,7 +184,7 @@ void ProfaluxControler::blink(OutputPin *pin, int ms1, int ms2, int count) {
 }
 
 void ProfaluxControler::queue_blink(OutputPin *pin, int ms) {
-  ESP_LOGD(TAG, "Queue Blink %d %d ms", pin->getPinNumber(), ms);
+  ESP_LOGI(TAG, "Queue Blink %d %d ms", pin->getPinNumber(), ms);
   trace_free_heap(TAG);
   BlinkData *data = new BlinkData(pin, ms, 0, 1, false);
 
