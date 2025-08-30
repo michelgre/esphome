@@ -35,7 +35,7 @@ void ProfaluxControler::setup() {
       AllPins[i] = NULL;
     }
   }
-  //this->blink(PicoLed, 30, 100, 3);
+  this->blink(PicoLed, 30, 100, 3);
   ESP_LOGCONFIG(TAG, "Fin Setup\n");
 }
 
@@ -166,6 +166,7 @@ void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) 
 }
   
 void ProfaluxControler::blink(OutputPin *pin, int ms) {
+  ESP_LOGD(TAG, "Start blink %d for %d ms", pin->getPinNumber(), ms);
   if (pin!=NULL) {
     pin->turn_on();
     Task<ProfaluxControler, OutputPin *> stopTask(this, &ProfaluxControler::turn_off, pin);
