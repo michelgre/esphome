@@ -145,7 +145,7 @@ void ProfaluxControler::blink_again(Task<ProfaluxControler, BlinkData *> *task) 
     // Debug
     rp2040::RP2040GPIOPin pinTest;
     pinTest.setup();
-    pinTest.set_flags(FLAG_OUTPUT);
+    pinTest.set_flags(esphome::gpio::FLAG_OUTPUT);
     pinTest.set_pin(11);
     pinTest.digital_write(true);
     // Debug end
