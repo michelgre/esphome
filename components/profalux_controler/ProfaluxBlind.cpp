@@ -81,7 +81,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   }
   
   if (call.get_stop()) {
-    ESP_LOGI(TAG, "Remote %d STOP pin=%d", blindNumber, this->stopPin);
+    ESP_LOGI(TAG, "Remote %d STOP pin=%d", blindNumber, this->stopPin->getPinNumber());
     pin = this->stopPin;
   }
   else {
