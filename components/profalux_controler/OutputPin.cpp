@@ -13,6 +13,7 @@ OutputPin::OutputPin(int pinNumber) {
   this->myPin->set_inverted(false);
   this->myPin->set_flags(gpio::Flags::FLAG_OUTPUT);
   this->set_pin(this->myPin);
+  this->setup();
 }
     
 } // 
