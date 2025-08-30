@@ -81,7 +81,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   }
   
   if (call.get_stop()) {
-    ESP_LOGI(TAG, "Remote %d STOP");
+    ESP_LOGI(TAG, "Remote %d STOP pin=%d", blindNumber, this->stopPin);
     pin = this->stopPin;
   }
   else {
@@ -119,7 +119,7 @@ void ProfaluxBlind::turn_on(Task<ProfaluxBlind, OutputPin *> *task) {
 }
 
 void ProfaluxBlind::activateMotor(OutputPin *pin) {
-  ESP_LOGI(TAG, "activateMotor %d", pin->getPinNumber());
+  ESP_LOGD(TAG, "activateMotor %d", pin->getPinNumber());
   controler->queue_blink(pin, controler->get_signal_duration());
 }
 
