@@ -6,7 +6,7 @@ namespace outputpin {
 
 /* A GPIO output pin */
 OutputPin::OutputPin(int pinNumber) {
-  this->set_component_source("gpio.output");
+  this->set_component_source(LOG_STR("gpio.output"));
   App.register_component(this);
   this->myPin = new rp2040::RP2040GPIOPin();
   this->myPin->set_pin(pinNumber);
