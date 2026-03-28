@@ -67,11 +67,12 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
   if (!initDone) {
     this->init_();
   }
+
   OutputPin *pin = NULL;
   controler->blink(controler->get_led_pin(), 20);
 
-  float pos = call.get_position().value();
-  
+  float pos = call.get_position().value_or(0.5f);
+
   if (controler == NULL) {
     ESP_LOGW(TAG, "Remote %d: pas de controleur", blindNumber);
   }
@@ -79,7 +80,7 @@ void ProfaluxBlind::control(const cover::CoverCall &call) {
     std::string ctrl_id = controler->get_controler_id();
     ESP_LOGD(TAG, "Remote %d: %s", blindNumber, ctrl_id.c_str());
   }
-  
+
   if (call.get_stop()) {
     ESP_LOGI(TAG, "Remote %d STOP");
     pin = this->stopPin;
